@@ -41,34 +41,39 @@ void Algorithms::bruteForce(Matrix* matrix) {
 
 int Algorithms::bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix) {
 	int shortestPath = INT_MAX;
+	const int matrixSize = matrix->size;
+	std::vector<std::vector<int>>* pointerMat = &(matrix->mat);
 	std::vector<int> permutationVector;
 	std::vector<int>::iterator permutationIterator;
-	permutationVector.reserve(matrix->mat.size());
+	std::vector<std::vector<int>>::iterator outerIter = pointerMat->begin();
+	std::vector<int>::iterator innerIter = (*outerIter).begin();
 
-	for (int i = 1; i < matrix->mat.size(); i++) permutationVector.push_back(i);
+	permutationVector.reserve(pointerMat->size());
+	
+	for (int i = 1; i < matrixSize; i++) permutationVector.push_back(i);
 	
 	// póki s¹ permutacje, analizujemy (do while, aby pierwsza permutacja by³a niezmieniona)
 	do {
-		std::vector<std::vector<int>>::iterator outerIter = matrix->mat.begin();
-		std::vector<int>::iterator innerIter = (*outerIter).begin();
 		int previousVertex = 0;
 		int currentPath = 0;
+		int currentVertexNumber = 0;
 
-		for (permutationIterator = permutationVector.begin(); permutationIterator != permutationVector.end(); permutationIterator++) {
+		for (permutationIterator = permutationVector.begin(); currentVertexNumber < matrixSize - 1; permutationIterator++, currentVertexNumber++) {
 			/* np pierwsza iteracja(od zrodla)
 			* outerIter = pierwszy wierzcholek permutationVector
 			* inner = previousVertex (czyli zrodlo, czyli 0)
 			*/
-			outerIter = matrix->mat.begin();
+			
+			outerIter = pointerMat->begin();
 			std::advance(outerIter, *permutationIterator);
-
+			
 			innerIter = (*outerIter).begin();
 			std::advance(innerIter, previousVertex);
 			currentPath += *innerIter;
-			previousVertex = *permutationIterator;
+			previousVertex = *permutationIterator;			
 		}
 
-		outerIter = matrix->mat.begin();
+		outerIter = pointerMat->begin();
 		innerIter = (*outerIter).begin();
 		std::advance(innerIter, previousVertex);
 		currentPath += *innerIter;
@@ -79,6 +84,6 @@ int Algorithms::bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix
 		}
 
 	} while (std::next_permutation(permutationVector.begin(), permutationVector.end()));
-	
+
 	return shortestPath;
 }

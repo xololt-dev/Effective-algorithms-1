@@ -25,13 +25,32 @@ void Algorithms::bruteForce(Matrix* matrix) {
 * inaczej recursive, sprawdzamy odleg³osci, zwracamy najkrótsz¹ drogê + do wektora dodajemy wierzcho³ek najkrótszej drogi
 */
 
-int bruteRecursiveHelperFunction(std::vector<int> pointsLeft) {
+int bruteRecursiveHelperFunction(std::vector<int> pointsLeft, std::vector<int>* orderQueue, Matrix* matrix) {
 	int shortestPath = INT_MAX;
+	int vertexToAdd = 0;
 
 	// ?
-	for (auto& a : pointsLeft) {
+	for (auto a : pointsLeft) {
 		std::vector<int> pointsOutput = pointsLeft;
-		std::remove(pointsOutput.begin(), pointsOutput.end(), a);
+		std::remove(pointsOutput.begin(), pointsOutput.end(), &a);
+
+		if (!pointsOutput.size()) {
+			// do zrodla
+			std::vector<std::vector<int>>::iterator mainIter = matrix->mat.begin();
+			std::vector<int>::iterator innerIter = (*mainIter).begin();
+			// znajdz ostatni wierzcholek
+			std::advance(innerIter, &a);
+			// wartosc sciezki do zrodla, zamkniecie petli
+			shortestPath = *innerIter;
+		}
+		else {
+			int result = bruteRecursiveHelperFunction(pointsOutput, orderQueue, matrix);
+			
+			if (result < shortestPath) {
+				vertexToAdd = a;
+				shortestPath = result;
+			}
+		}
 	}
 	
 	return shortestPath;

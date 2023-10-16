@@ -1,15 +1,16 @@
 #include "util.hpp"
+// #include "algorithms.hpp"
 
 #include <iostream>
 #include <conio.h>
 #include <string>
 
 Matrix matrix;
+Algorithms algo;
 
 void algorithmMenu() {
 	char option;
 	do {
-		clear();
 		std::cout << "\n==== URUCHOM ALGORYTM ===\n";
 		std::cout << "1.Brute force\n";
 		std::cout << "2.Podzial i ograniczenia\n";
@@ -21,6 +22,7 @@ void algorithmMenu() {
 
 		switch (option) {
 		case '1':
+			algo.bruteForce((Matrix*) &matrix);
 			// menu_table();
 			break;
 

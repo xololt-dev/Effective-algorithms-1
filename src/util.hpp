@@ -1,5 +1,6 @@
 #include <fstream>
 #include <vector>
+#include <chrono>
 
 class Matrix {
 public:
@@ -10,6 +11,20 @@ public:
 	void loadFromFile(std::string fileName);
 	void generate(int size);
 	void display();
+};
+
+class Algorithms {
+private:
+	int pathLength;
+	std::vector<int> vertexOrder;
+	std::chrono::duration<double> executionTime;
+
+public:
+	void bruteForce(Matrix* matrix);
+	void branchAndBound(std::vector<std::vector<int>> matrix);
+	void dynamicProgramming(std::vector<std::vector<int>> matrix);
+
+	int bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix);
 };
 
 void clear();

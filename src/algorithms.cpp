@@ -26,6 +26,8 @@ void Algorithms::bruteForce(Matrix* matrix) {
 	std::vector<int> order;
 
 	this->pathLength = bruteHelperFunction(&order, matrix);
+	order.push_back(0);
+	order.insert(order.begin(), 0);
 
 	executionTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - now);
 
@@ -44,9 +46,8 @@ int Algorithms::bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix
 	const int matrixSize = matrix->size;
 	std::vector<std::vector<int>>* pointerMat = &(matrix->mat);
 	std::vector<int> permutationVector;
-	std::vector<int>::iterator permutationIterator;
 	std::vector<std::vector<int>>::iterator outerIter = pointerMat->begin();
-	std::vector<int>::iterator innerIter = (*outerIter).begin();
+	std::vector<int>::iterator permutationIterator, innerIter = (*outerIter).begin();
 
 	permutationVector.reserve(pointerMat->size());
 	

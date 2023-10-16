@@ -73,7 +73,7 @@ void Matrix::generate(int size) {
 		temp.reserve(size);
 		for (int j = 0; j < size; j++) {
 			if (i == j) temp.push_back(0);
-			else temp.push_back(rand() % 1000);
+			else temp.push_back(1 + rand() % 500);
 		}
 		mat.push_back(temp);
 	}

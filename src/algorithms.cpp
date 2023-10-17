@@ -22,6 +22,7 @@ void Algorithms::bruteForce(Matrix* matrix) {
 		if (matrixSize <= maxThreadsPossible && matrixSize > 3) {
 			std::vector<int> tempVec;
 			std::vector<std::vector<int>> passOffVector;
+			passOffVector.reserve(matrixSize - 1);
 			std::vector<std::thread*> vectorOfThreadsInFlight;
 			orders.resize(matrixSize);
 			pathLengths.resize(matrixSize);
@@ -34,11 +35,12 @@ void Algorithms::bruteForce(Matrix* matrix) {
 					vectorOfThreadsInFlight.push_back(new std::thread(bruteHelperMultithread,
 						&*ordersIterator,
 						&*pathLengthsIterator,
-						&passOffVector,
+						passOffVector,
 						matrix)
 					);
-					// vectorOfThreadsInFlight.back()->detach();
+					vectorOfThreadsInFlight.back()->join();
 					passOffVector.clear();
+					passOffVector.reserve(matrixSize - 1);
 					previousVertex = permutationVector.front();
 				}
 
@@ -51,14 +53,16 @@ void Algorithms::bruteForce(Matrix* matrix) {
 			vectorOfThreadsInFlight.push_back(new std::thread(bruteHelperMultithread,
 				&*ordersIterator,
 				&*pathLengthsIterator,
-				&passOffVector,
+				passOffVector,
 				matrix)
 			);
+			vectorOfThreadsInFlight.back()->join();
 
 			//join w¹tków
+			/*
 			for (auto& a : vectorOfThreadsInFlight) {
 				a->join();
-			}
+			}*/
 
 			int place = 0;
 			int currentPlace = 0;
@@ -78,9 +82,11 @@ void Algorithms::bruteForce(Matrix* matrix) {
 
 			executionTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - now);
 
+			/*
 			for (auto& a : vectorOfThreadsInFlight) {
 				delete a;
 			}
+			*/
 
 			std::cout << pathLength << "\n";
 			std::cout << executionTime.count() << "s\n";
@@ -158,23 +164,25 @@ int Algorithms::bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix
 	return shortestPath;
 }
 
-void Algorithms::bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<std::vector<int>>* permutations, Matrix* matrix) {
+void Algorithms::bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<std::vector<int>> permutations, Matrix* matrix) {
 	int shortestPath = INT_MAX;
 	const int matrixSize = matrix->size;
-	std::vector<std::vector<int>>* pointerMat = &(matrix->mat), pointerPermutations = *permutations;
-	std::vector<std::vector<int>>::iterator outerIter = pointerMat->begin(), permIter = pointerPermutations.end(); //permutations->end();
+	std::vector<std::vector<int>>* pointerMat = &(matrix->mat);
+	std::vector<std::vector<int>>::iterator outerIter = pointerMat->begin(), permIter = permutations.end(); //permutations->end();
 	std::vector<int>::iterator permutationIterator, innerIter = (*outerIter).begin();
 
-	for (std::vector<int> a : *permutations) {
+	/*
+	for (std::vector<int> a : permutations) {
 		for (int n : a) {
 			std::cout << n;
 		}
 		std::cout << " ";
 	}
 	std::cout << "\n";
+	*/
 
 	// dopóki mamy jakieœ dostarczone permutacje
-	while (permIter != pointerPermutations.end()) {
+	while (permIter != permutations.end()) {
 		permutationIterator = (*permIter).begin();
 
 		int previousVertex = 0;

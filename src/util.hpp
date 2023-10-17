@@ -25,7 +25,7 @@ public:
 	void dynamicProgramming(std::vector<std::vector<int>> matrix);
 
 	int bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix);
-	void bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<std::vector<int>>* permutations, Matrix* matrix);
+	static void bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<std::vector<int>>* permutations, Matrix* matrix);
 };
 
 void clear();

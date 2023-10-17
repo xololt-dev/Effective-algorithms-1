@@ -1,39 +1,71 @@
 #include "util.hpp"
 #include <algorithm>
 #include <iostream>
+#include <thread>
 
 void Algorithms::bruteForce(Matrix* matrix) {
-	/*
-	int startPoint = 0, currentPoint = startPoint, shortestPath = INT_MAX;
-	std::vector<std::vector<int>>::iterator mainIter = matrix->mat.begin();
-	mainIter++;
-	currentPoint++;
-
-	for (; mainIter != matrix->mat.end(); mainIter++) {
-		// dodaæ d³ugoœæ œcie¿ki, usun¹æ wierzcho³ek, iœæ dalej
-		std::vector<int> pointsLeft;
-		for (int i = 0; i < matrix->mat.size(); i++) {
-			if (i != startPoint && i != currentPoint) pointsLeft.push_back(i);
-		}
-
-		// std::remove(pointsLeft.begin(), pointsLeft.end(), 1);
-		std::min(shortestPath, 1);
-
-		currentPoint;
-	}
-	*/
 	std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
-	std::vector<int> order;
+	
+	if (1) {
+		unsigned int maxThreadsPossible = std::thread::hardware_concurrency();
 
-	this->pathLength = bruteHelperFunction(&order, matrix);
-	order.push_back(0);
-	order.insert(order.begin(), 0);
+		std::vector<std::vector<int>> orders; // results dump
+		std::vector<int> pathLengths; // results dump
+		int matrixSize = matrix->size;
 
-	executionTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - now);
+		std::vector<int> permutationVector;
+		permutationVector.reserve(matrixSize);
+		for (int i = 1; i < matrixSize; i++) permutationVector.push_back(i);
+		int previousVertex = 1;
 
-	std::cout << pathLength << "\n";
-	std::cout << executionTime.count() << "s\n";
-	for (auto a : order) std::cout << a << " ";	
+		// mo¿na stworzyæ wartoœci na ka¿dy w¹tek bez problemu 
+		if (matrixSize <= maxThreadsPossible && matrixSize > 3) {
+			std::vector<int> tempVec;
+			std::vector<std::vector<int>> passOffVector;
+			std::vector<std::thread> vectorOfThreadsInFlight;
+			std::vector<std::vector<int>>::iterator ordersIterator = orders.begin();
+			std::vector<int>::iterator pathLengthsIterator = pathLengths.begin();
+
+			do {
+				// czyœcimy passOff, wype³niamy od nowa
+				if (previousVertex != permutationVector.front()) {
+					std::thread temp(&Algorithms::bruteHelperMultithread,
+						&*ordersIterator,
+						&*pathLengthsIterator,
+						&passOffVector,
+						matrix);
+					temp.join();
+					vectorOfThreadsInFlight.push_back(temp);
+					passOffVector.clear();
+				}
+
+				// wype³niamy passOff
+				tempVec = permutationVector;
+				passOffVector.push_back(tempVec);
+
+			} while (std::next_permutation(permutationVector.begin(), permutationVector.end()));
+
+			for (auto& a : vectorOfThreadsInFlight) {
+				a.join();
+			}
+		}
+		// problemy
+		else {
+
+		}
+	}
+	else {
+		std::vector<int> order;
+		this->pathLength = bruteHelperFunction(&order, matrix);
+		order.push_back(0);
+		order.insert(order.begin(), 0);
+
+		executionTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - now);
+
+		std::cout << pathLength << "\n";
+		std::cout << executionTime.count() << "s\n";
+		for (auto a : order) std::cout << a << " ";
+	}
 }
 
 /*
@@ -49,7 +81,7 @@ int Algorithms::bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix
 	std::vector<std::vector<int>>::iterator outerIter = pointerMat->begin();
 	std::vector<int>::iterator permutationIterator, innerIter = (*outerIter).begin();
 
-	permutationVector.reserve(pointerMat->size());
+	permutationVector.reserve(matrixSize);
 	
 	for (int i = 1; i < matrixSize; i++) permutationVector.push_back(i);
 	
@@ -87,4 +119,51 @@ int Algorithms::bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix
 	} while (std::next_permutation(permutationVector.begin(), permutationVector.end()));
 
 	return shortestPath;
+}
+
+void Algorithms::bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<std::vector<int>>* permutations, Matrix* matrix) {
+	int shortestPath = INT_MAX;
+	const int matrixSize = matrix->size;
+	std::vector<std::vector<int>>* pointerMat = &(matrix->mat);
+	std::vector<std::vector<int>>::iterator outerIter = pointerMat->begin(), permIter = permutations->end();
+	std::vector<int>::iterator permutationIterator, innerIter = (*outerIter).begin();
+
+	// dopóki mamy jakieœ dostarczone permutacje
+	while (permIter != permutations->end()) {
+		permutationIterator = (*permIter).begin();
+
+		int previousVertex = 0;
+		int currentPath = 0;
+		int currentVertexNumber = 0;
+
+		for (permutationIterator = (*permIter).begin(); currentVertexNumber < matrixSize - 1; permutationIterator++, currentVertexNumber++) {
+			/* np pierwsza iteracja(od zrodla)
+			* outerIter = pierwszy wierzcholek permutationVector
+			* inner = previousVertex (czyli zrodlo, czyli 0)
+			*/
+
+			outerIter = pointerMat->begin();
+			std::advance(outerIter, *permutationIterator);
+
+			innerIter = (*outerIter).begin();
+			std::advance(innerIter, previousVertex);
+			currentPath += *innerIter;
+			previousVertex = *permutationIterator;
+		}
+
+		outerIter = pointerMat->begin();
+		innerIter = (*outerIter).begin();
+		std::advance(innerIter, previousVertex);
+		currentPath += *innerIter;
+
+		if (currentPath < shortestPath) {
+			shortestPath = currentPath;
+			*orderQueue = *permIter;
+		}
+
+		permIter++;
+	}
+
+	// zamiast return
+	*pathLength = shortestPath;
 }

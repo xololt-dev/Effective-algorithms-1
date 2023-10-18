@@ -19,11 +19,11 @@ void Algorithms::bruteForce(Matrix* matrix) {
 		int previousVertex = 1;
 
 		// mo¿na stworzyæ wartoœci na ka¿dy w¹tek bez problemu 
-		if (matrixSize <= maxThreadsPossible && matrixSize > 3) {
+		if (/*matrixSize <= maxThreadsPossible && */matrixSize > 3) {
 			std::vector<std::thread*> vectorOfThreadsInFlight;
 			vectorOfThreadsInFlight.reserve(matrixSize - 1);
-			orders.resize(matrixSize);
-			pathLengths.resize(matrixSize, INT_MAX);
+			orders.resize(matrixSize - 1);
+			pathLengths.resize(matrixSize - 1, INT_MAX);
 			std::vector<std::vector<int>>::iterator ordersIterator = orders.begin();
 			std::vector<int>::iterator pathLengthsIterator = pathLengths.begin();
 
@@ -59,7 +59,16 @@ void Algorithms::bruteForce(Matrix* matrix) {
 			for (auto& a : vectorOfThreadsInFlight) {
 				a->join();
 			}*/
-
+			
+			bool notFinished = 0;
+			do {
+				notFinished = 0;
+				for (auto a : pathLengths) if (a == INT_MAX) {
+					notFinished = 1;
+					break;
+				}
+			} while (notFinished);
+			
 			int place = 0;
 			int currentPlace = 0;
 			int minimum = INT_MAX;

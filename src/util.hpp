@@ -26,6 +26,7 @@ public:
 
 	int bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix);
 	static void bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<std::vector<int>> permutations, Matrix* matrix);
+	static void bruteHelperMultithreadNew(std::vector<int>* orderQueue, int* pathLength, std::vector<int> permutation, int permutationNumber, Matrix* matrix);
 };
 
 void clear();

@@ -20,40 +20,36 @@ void Algorithms::bruteForce(Matrix* matrix) {
 
 		// mo¿na stworzyæ wartoœci na ka¿dy w¹tek bez problemu 
 		if (matrixSize <= maxThreadsPossible && matrixSize > 3) {
-			std::vector<int> tempVec;
-			std::vector<std::vector<int>> passOffVector;
-			passOffVector.reserve(matrixSize - 1);
 			std::vector<std::thread*> vectorOfThreadsInFlight;
+			vectorOfThreadsInFlight.reserve(matrixSize - 1);
 			orders.resize(matrixSize);
-			pathLengths.resize(matrixSize);
+			pathLengths.resize(matrixSize, INT_MAX);
 			std::vector<std::vector<int>>::iterator ordersIterator = orders.begin();
 			std::vector<int>::iterator pathLengthsIterator = pathLengths.begin();
 
 			do {
 				// czyœcimy passOff, wype³niamy od nowa
 				if (previousVertex != permutationVector.front()) {
-					vectorOfThreadsInFlight.push_back(new std::thread(bruteHelperMultithread,
+					vectorOfThreadsInFlight.push_back(new std::thread(bruteHelperMultithreadNew,
 						&*ordersIterator,
 						&*pathLengthsIterator,
-						passOffVector,
+						permutationVector,
+						permutationVector.front(),
 						matrix)
 					);
-					vectorOfThreadsInFlight.back()->join();
-					passOffVector.clear();
-					passOffVector.reserve(matrixSize - 1);
+					vectorOfThreadsInFlight.back()->detach();
+
+					ordersIterator++;
+					pathLengthsIterator++;
 					previousVertex = permutationVector.front();
 				}
-
-				// wype³niamy passOff
-				tempVec = permutationVector;
-				passOffVector.push_back(tempVec);
-
 			} while (std::next_permutation(permutationVector.begin(), permutationVector.end()));
 
-			vectorOfThreadsInFlight.push_back(new std::thread(bruteHelperMultithread,
+			vectorOfThreadsInFlight.push_back(new std::thread(bruteHelperMultithreadNew,
 				&*ordersIterator,
 				&*pathLengthsIterator,
-				passOffVector,
+				permutationVector,
+				permutationVector.front(),
 				matrix)
 			);
 			vectorOfThreadsInFlight.back()->join();
@@ -82,12 +78,10 @@ void Algorithms::bruteForce(Matrix* matrix) {
 
 			executionTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - now);
 
-			/*
 			for (auto& a : vectorOfThreadsInFlight) {
 				delete a;
 			}
-			*/
-
+			
 			std::cout << pathLength << "\n";
 			std::cout << executionTime.count() << "s\n";
 			for (auto a : this->vertexOrder) std::cout << a << " ";
@@ -216,6 +210,48 @@ void Algorithms::bruteHelperMultithread(std::vector<int>* orderQueue, int* pathL
 
 		permIter++;
 	}
+
+	// zamiast return
+	*pathLength = shortestPath;
+}
+
+void Algorithms::bruteHelperMultithreadNew(std::vector<int>* orderQueue, int* pathLength, std::vector<int> permutation, int permutationNumber, Matrix* matrix) {
+	int shortestPath = INT_MAX;
+	const int matrixSize = matrix->size;
+	std::vector<std::vector<int>>* pointerMat = &(matrix->mat);
+	std::vector<std::vector<int>>::iterator outerIter = pointerMat->begin();
+	std::vector<int>::iterator permutationIterator, innerIter = (*outerIter).begin();
+
+	do {
+		int previousVertex = 0;
+		int currentPath = 0;
+		int currentVertexNumber = 0;
+
+		for (permutationIterator = permutation.begin(); currentVertexNumber < matrixSize - 1; permutationIterator++, currentVertexNumber++) {
+			/* np pierwsza iteracja(od zrodla)
+			* outerIter = pierwszy wierzcholek permutationVector
+			* inner = previousVertex (czyli zrodlo, czyli 0)
+			*/
+
+			outerIter = pointerMat->begin();
+			std::advance(outerIter, *permutationIterator);
+
+			innerIter = (*outerIter).begin();
+			std::advance(innerIter, previousVertex);
+			currentPath += *innerIter;
+			previousVertex = *permutationIterator;
+		}
+
+		outerIter = pointerMat->begin();
+		innerIter = (*outerIter).begin();
+		std::advance(innerIter, previousVertex);
+		currentPath += *innerIter;
+
+		if (currentPath < shortestPath) {
+			shortestPath = currentPath;
+			*orderQueue = permutation;
+		}
+	} while (std::next_permutation(permutation.begin(), permutation.end()) && permutation.front() == permutationNumber);
 
 	// zamiast return
 	*pathLength = shortestPath;

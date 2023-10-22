@@ -248,6 +248,10 @@ void Algorithms::bruteHelperMultithreadNew(std::vector<int>* orderQueue, int* pa
 			innerIter = (*outerIter).begin();
 			std::advance(innerIter, previousVertex);
 			currentPath += *innerIter;
+
+			// jezeli liczona sciezka jest dluzsza niz obecnie najkrotsza, wczesniej konczymy
+			if (currentPath > shortestPath) goto ZA_DUZO;
+
 			previousVertex = *permutationIterator;
 		}
 
@@ -255,7 +259,7 @@ void Algorithms::bruteHelperMultithreadNew(std::vector<int>* orderQueue, int* pa
 		innerIter = (*outerIter).begin();
 		std::advance(innerIter, previousVertex);
 		currentPath += *innerIter;
-
+	ZA_DUZO:
 		if (currentPath < shortestPath) {
 			shortestPath = currentPath;
 			*orderQueue = permutation;

@@ -9,6 +9,7 @@ public:
 	std::vector<std::vector<int>> mat;
 
 	void loadFromFile(std::string fileName);
+	void oldLoadFromFile(std::string fileName);
 	void generate(int size);
 	void display();
 };

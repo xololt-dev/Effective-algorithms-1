@@ -116,6 +116,64 @@ void Algorithms::bruteForce(Matrix* matrix, int multithread) {
 	}
 }
 
+void Algorithms::dynamicProgramming(Matrix* matrix) {
+	/* dwójki
+	* trójki itd...
+	* max size-2 ?
+	*/
+
+	// + vector do sprawdzenia, od najmniejszej do najwiêkszej (tuple: droga + odl.?)
+
+	/* na stertê ka¿d¹ wagê wierzcho³ku koñcz¹c¹ siê w 0 + droga	
+	*/
+	std::vector<int> permutationVector;
+	const int matrixSize = matrix->size;
+	permutationVector.reserve(matrixSize);
+
+	for (int i = 1; i < matrixSize; i++) permutationVector.push_back(i);
+
+	std::vector<std::vector<Cache>> cachedPaths;
+	cachedPaths.reserve(matrixSize - 2);
+
+	do {
+		// sprawdzenie czy istnieje wynik w cache
+			// jeœli nie, liczymy
+			// jeœli tak, u¿ywamy cache i liczymy resztê jeœli coœ zosta³o + zapis do cache
+		
+
+	} while (std::next_permutation(permutationVector.begin(), permutationVector.end()));
+}
+
+bool mypredicate(int i, int j) {
+	return (i == j);
+}
+
+Cache Algorithms::findCachedResult(std::vector<std::vector<Cache>>* cachedPaths, std::vector<int>* permutationVector)
+{
+	Cache result;
+
+	// sprawdzenie czy istnieje wynik w cache
+	// jeœli cache pusty
+	if (!cachedPaths->size()) {
+		result.path = { 0 };
+		result.pathLength = -1;
+
+		return result;
+	}
+
+	// dla ka¿dej kombinacji, zaczynamy od najd³u¿szych
+	for (std::vector<std::vector<Cache>>::iterator iter = cachedPaths->end(); iter != cachedPaths->begin(); iter--) {
+		for (auto cache : *iter) {
+			// jeœli wystêpuje
+			if (std::search(permutationVector->begin(), permutationVector->end(), 
+				cache.path.begin(), cache.path.end()), 
+				mypredicate) std::cout << "";
+		}
+	}
+
+	return result;
+}
+
 void Algorithms::displayResults() {
 	std::cout << "\nDlugosc sciezki: " << pathLength << "\n";
 	std::cout << "Kolejnosc wierzcholkow:\n0 ";

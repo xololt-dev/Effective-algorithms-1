@@ -14,6 +14,11 @@ public:
 	void display();
 };
 
+struct Cache {
+	std::vector<int> path;
+	int pathLength;
+};
+
 class Algorithms {
 private:
 	int pathLength;
@@ -25,10 +30,12 @@ private:
 	int bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix);
 	static void bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<int> permutation, int permutationNumber, Matrix* matrix);
 
+	Cache findCachedResult(std::vector<std::vector<Cache>>* cachedPaths, std::vector<int>* permutationVector);
+
 public:
 	void bruteForce(Matrix* matrix, int multithread = 1);
 	void branchAndBound(std::vector<std::vector<int>> matrix);
-	void dynamicProgramming(std::vector<std::vector<int>> matrix);
+	void dynamicProgramming(Matrix* matrix);
 };
 
 void clear();

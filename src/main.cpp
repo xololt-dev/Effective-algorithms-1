@@ -37,7 +37,7 @@ void algorithmMenu() {
 			break;
 
 		case '4':
-			// menu_heap();
+			algo.dynamicProgramming((Matrix*) &matrix);
 			break;
 		}
 	} while (option != '0');

@@ -28,6 +28,23 @@ void Algorithms::bruteForce(Matrix* matrix, int multithread) {
 		std::vector<int>::iterator pathLengthsIterator = pathLengths.begin();
 
 		// tworzenie w¹tków dla zestawów permutacji
+		for (int i = 0; i < permutationVector.size() - 1; i++) {
+			std::swap(permutationVector[0], permutationVector[i + 1]);
+
+			vectorOfThreadsInFlight.push_back(new std::thread(bruteHelperMultithread,
+				&*ordersIterator,
+				&*pathLengthsIterator,
+				permutationVector,
+				permutationVector.front(),
+				matrix)
+			);
+			vectorOfThreadsInFlight.back()->detach();
+
+			ordersIterator++;
+			pathLengthsIterator++;
+		}
+
+		/*
 		do {
 			// czyœcimy passOff, wype³niamy od nowa
 			if (previousVertex != permutationVector.front()) {
@@ -45,6 +62,7 @@ void Algorithms::bruteForce(Matrix* matrix, int multithread) {
 				previousVertex = permutationVector.front();
 			}
 		} while (std::next_permutation(permutationVector.begin(), permutationVector.end()));
+		*/
 
 		vectorOfThreadsInFlight.push_back(new std::thread(bruteHelperMultithread,
 			&*ordersIterator,

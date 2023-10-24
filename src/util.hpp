@@ -20,14 +20,15 @@ private:
 	std::vector<int> vertexOrder;
 	std::chrono::duration<double> executionTime;
 
-public:
-	void bruteForce(Matrix* matrix);
-	void branchAndBound(std::vector<std::vector<int>> matrix);
-	void dynamicProgramming(std::vector<std::vector<int>> matrix);
+	void displayResults();
 
 	int bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix);
-	static void bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<std::vector<int>> permutations, Matrix* matrix);
-	static void bruteHelperMultithreadNew(std::vector<int>* orderQueue, int* pathLength, std::vector<int> permutation, int permutationNumber, Matrix* matrix);
+	static void bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<int> permutation, int permutationNumber, Matrix* matrix);
+
+public:
+	void bruteForce(Matrix* matrix, int multithread = 1);
+	void branchAndBound(std::vector<std::vector<int>> matrix);
+	void dynamicProgramming(std::vector<std::vector<int>> matrix);
 };
 
 void clear();

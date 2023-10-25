@@ -126,6 +126,7 @@ void Algorithms::dynamicProgramming(Matrix* matrix) {
 
 	/* na stertê ka¿d¹ wagê wierzcho³ku koñcz¹c¹ siê w 0 + droga	
 	*/
+	std::vector<std::vector<int>>* pointerMat = &(matrix->mat);
 	std::vector<int> permutationVector;
 	const int matrixSize = matrix->size;
 	permutationVector.reserve(matrixSize);
@@ -134,12 +135,55 @@ void Algorithms::dynamicProgramming(Matrix* matrix) {
 
 	std::vector<std::vector<Cache>> cachedPaths;
 	cachedPaths.reserve(matrixSize - 2);
+	Cache tempCache;
+
+	std::vector<std::vector<int>>::iterator outerIter = pointerMat->begin();
+	std::vector<int>::iterator permutationIterator, innerIter = (*outerIter).begin();
+
+	int shortestPath = INT_MAX;
 
 	do {
 		// sprawdzenie czy istnieje wynik w cache
 			// jeœli nie, liczymy
 			// jeœli tak, u¿ywamy cache i liczymy resztê jeœli coœ zosta³o + zapis do cache
-		
+		tempCache = findCachedResult(&cachedPaths, &permutationVector);
+
+		// nie znaleziono
+		if (tempCache.path == std::vector<int>{ -1 } || tempCache.pathLength == -1) {
+			int previousVertex = 0;
+			int currentPath = 0;
+			int currentVertexNumber = 0;
+
+			// dokoñczyæ
+			for (permutationIterator = permutationVector.begin(); currentVertexNumber < matrixSize - 1; permutationIterator++, currentVertexNumber++) {
+				/* np pierwsza iteracja(od zrodla)
+				* outerIter = pierwszy wierzcholek permutationVector
+				* inner = previousVertex (czyli zrodlo, czyli 0)
+				*/
+
+				outerIter = pointerMat->begin();
+				std::advance(outerIter, *permutationIterator);
+
+				innerIter = (*outerIter).begin();
+				std::advance(innerIter, previousVertex);
+				currentPath += *innerIter;
+
+				previousVertex = *permutationIterator;
+			}
+
+			outerIter = pointerMat->begin();
+			innerIter = (*outerIter).begin();
+			std::advance(innerIter, previousVertex);
+			currentPath += *innerIter;
+
+			if (currentPath < shortestPath) {
+				shortestPath = currentPath;
+				this->vertexOrder = permutationVector;
+			}
+		}
+		else {
+
+		}
 
 	} while (std::next_permutation(permutationVector.begin(), permutationVector.end()));
 }

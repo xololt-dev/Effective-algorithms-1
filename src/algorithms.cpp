@@ -151,24 +151,47 @@ bool mypredicate(int i, int j) {
 Cache Algorithms::findCachedResult(std::vector<std::vector<Cache>>* cachedPaths, std::vector<int>* permutationVector)
 {
 	Cache result;
+	result.path = { -1 };
+	result.pathLength = -1;
 
 	// sprawdzenie czy istnieje wynik w cache
 	// jeúli cache pusty
-	if (!cachedPaths->size()) {
-		result.path = { 0 };
-		result.pathLength = -1;
+	if (!cachedPaths->size()) return result;
 
-		return result;
-	}
-
+	std::vector<int>::iterator iterC = permutationVector->end();
+	// moøe while loop
+	
 	// dla kaødej kombinacji, zaczynamy od najd≥uøszych
+	/*
 	for (std::vector<std::vector<Cache>>::iterator iter = cachedPaths->end(); iter != cachedPaths->begin(); iter--) {
-		for (auto cache : *iter) {
+		for (Cache cache : *iter) {
+			// search
+			iterC = std::search(permutationVector->begin(), permutationVector->end(), cache.path.begin(), cache.path.end(), mypredicate);
+
 			// jeúli wystÍpuje
-			if (std::search(permutationVector->begin(), permutationVector->end(), 
-				cache.path.begin(), cache.path.end()), 
-				mypredicate) std::cout << "";
+			if (iterC != permutationVector->end()) {
+				// weü wartoúÊ i wyjdü
+				result = cache;
+				break;
+			}
 		}
+	}
+	*/
+	std::vector<std::vector<Cache>>::iterator iter = cachedPaths->end();
+	while (iterC == permutationVector->end() && iter != cachedPaths->begin()) {
+		for (Cache cache : *iter) {
+			// search
+			iterC = std::search(permutationVector->begin(), permutationVector->end(), cache.path.begin(), cache.path.end(), mypredicate);
+
+			// jeúli wystÍpuje
+			if (iterC != permutationVector->end()) {
+				// weü wartoúÊ i wyjdü
+				result = cache;
+				break;
+			}
+		}
+		
+		iter--;
 	}
 
 	return result;

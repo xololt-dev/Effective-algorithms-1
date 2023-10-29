@@ -2,6 +2,11 @@
 #include <algorithm>
 #include <iostream>
 #include <thread>
+#include <unordered_set>
+
+bool operator==(const Cache& lhs, const Cache& rhs) {
+	return (lhs.path == rhs.path); //&& lhs.pathLength == rhs.pathLength);
+}
 
 void Algorithms::bruteForce(Matrix* matrix, int multithread) {
 	std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
@@ -116,6 +121,21 @@ void Algorithms::bruteForce(Matrix* matrix, int multithread) {
 	}
 }
 
+bool sortCache(Cache c1, Cache c2) {
+	return (c1.path.front() <= c2.path.front()) && 
+		(c1.path[1] <= c2.path[1]) &&
+		(c1.pathLength < c2.pathLength);
+}
+
+bool checkPath(Cache c1, Cache c2) {
+	if (c1.path == c2.path && c1.pathLength <= c2.pathLength) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+}
+
 void Algorithms::dynamicProgramming(Matrix* matrix) {
 	/* dwójki
 	* trójki itd...
@@ -126,74 +146,195 @@ void Algorithms::dynamicProgramming(Matrix* matrix) {
 
 	/* na stertê ka¿d¹ wagê wierzcho³ku koñcz¹c¹ siê w 0 + droga	
 	*/
+	int shortestPath = INT_MAX;
 	std::vector<std::vector<int>>* pointerMat = &(matrix->mat);
 	std::vector<int> permutationVector;
 	const int matrixSize = matrix->size;
-	permutationVector.reserve(matrixSize);
+	permutationVector.reserve(matrixSize - 1);
 
 	for (int i = 1; i < matrixSize; i++) permutationVector.push_back(i);
-
-	std::vector<std::vector<Cache>> cachedPaths;
-	cachedPaths.reserve(matrixSize - 2);
-	Cache tempCache;
 
 	std::vector<std::vector<int>>::iterator outerIter = pointerMat->begin();
 	std::vector<int>::iterator permutationIterator, innerIter = (*outerIter).begin();
 
-	int shortestPath = INT_MAX;
+	std::vector<std::vector<Cache>> cachedPaths;
+	cachedPaths.reserve(matrixSize - 2);
+	
+	Cache tempCache;
+	tempCache.pathLength = -1;
 
+	// cache prawdopodobnie przechowuje okropne iloœci duplikatów
 	do {
 		// sprawdzenie czy istnieje wynik w cache
 			// jeœli nie, liczymy
 			// jeœli tak, u¿ywamy cache i liczymy resztê jeœli coœ zosta³o + zapis do cache
-		tempCache = findCachedResult(&cachedPaths, &permutationVector);
+		// tempCache = findCachedResult(&cachedPaths, &permutationVector);
 
 		// nie znaleziono
 		if (tempCache.path == std::vector<int>{ -1 } || tempCache.pathLength == -1) {
 			int previousVertex = 0;
 			int currentPath = 0;
-			int currentVertexNumber = 0;
+			int currentVertexNumber = permutationVector.size() - 1;
+			int snippetLength = 0;
 
-			// dokoñczyæ
-			for (permutationIterator = permutationVector.begin(); currentVertexNumber < matrixSize - 1; permutationIterator++, currentVertexNumber++) {
-				/* np pierwsza iteracja(od zrodla)
-				* outerIter = pierwszy wierzcholek permutationVector
-				* inner = previousVertex (czyli zrodlo, czyli 0)
-				*/
+			std::vector<std::vector<Cache>> newCaches;
+
+			// tutaj kolejnoœæ odwrotna (w porównaniu do brute force)
+			permutationIterator = permutationVector.end();
+
+			do {
+				permutationIterator--;
 
 				outerIter = pointerMat->begin();
-				std::advance(outerIter, *permutationIterator);
+				std::advance(outerIter, previousVertex);
 
 				innerIter = (*outerIter).begin();
-				std::advance(innerIter, previousVertex);
-				currentPath += *innerIter;
+				std::advance(innerIter, *permutationIterator);
+				snippetLength = *innerIter;
+
+				Cache temp;
+				temp.path = { *permutationIterator, previousVertex };
+				temp.pathLength = snippetLength;
+
+				// update œcie¿ek w Cache
+				addToCurrentIterationCache(&newCaches, temp, matrixSize, snippetLength, *permutationIterator);
+	
+				currentPath += snippetLength;
 
 				previousVertex = *permutationIterator;
-			}
+				currentVertexNumber--;
+			} while (currentVertexNumber >= 0); //(permutationIterator != permutationVector.begin());
 
+			// tutaj trzeba korektê
 			outerIter = pointerMat->begin();
+			std::advance(outerIter, *permutationIterator);
 			innerIter = (*outerIter).begin();
-			std::advance(innerIter, previousVertex);
 			currentPath += *innerIter;
 
 			if (currentPath < shortestPath) {
 				shortestPath = currentPath;
 				this->vertexOrder = permutationVector;
 			}
+
+			// jesli cache pusty, trzeba go wype³niæ
+			if (cachedPaths.empty()) {
+				cachedPaths = newCaches;
+			}
+			// coœ tutaj chyba skopane
+			else {
+				std::vector<std::vector<Cache>>::iterator cacheIter = cachedPaths.begin();
+
+				for (std::vector<Cache> vC : newCaches) {
+					std::unordered_set<Cache> cache_set(cacheIter->begin(), cacheIter->end());
+
+					for (Cache c : vC) {
+						std::pair<std::unordered_set<Cache>::iterator, bool> check = cache_set.insert(c);
+						
+						if (!check.second) {
+							/*
+							std::cout << (check.first)->pathLength << "   " << c.pathLength << "\n";
+							for (int i : (check.first)->path) {
+								std::cout << i << " ";
+							}
+							std::cout << "   ";
+							for (int i : c.path) {
+								std::cout << i << " ";
+							}
+							std::cout << "\n";
+							*/
+							if ((check.first)->pathLength > c.pathLength
+								&& (check.first)->path == c.path) {
+								cache_set.erase(check.first);
+								cache_set.insert(c);
+							}
+						}
+					}
+
+					*cacheIter = std::vector<Cache>(cache_set.begin(), cache_set.end());
+					cacheIter++;
+				}
+			}
+			newCaches.clear();
 		}
+		// znaleziono
 		else {
+			int position = 0;
 
+			shortestPath = 1234567;
 		}
-
 	} while (std::next_permutation(permutationVector.begin(), permutationVector.end()));
+	
+
+	for (std::vector<Cache>& v : cachedPaths) {
+		std::sort(v.begin(), v.end(), sortCache);
+	}
+	/*
+	int len = 2;
+	for (std::vector<Cache> v : cachedPaths) {
+		std::cout << "Should be length " << len << "\n\n";
+		for (Cache c : v) {
+			std::cout << "Path: ";
+			for (int i : c.path) {
+				std::cout << i << " ";
+			}
+			std::cout << "\nPath length: " << c.pathLength << "\n";
+		}
+		len++;
+	}
+	*/
+	std::cout << "\n\n\n\n";
+	std::cout << shortestPath << "\n";
+	for (int a : this->vertexOrder) {
+		std::cout << a << " ";
+	}
+	std::cout << "\n";
 }
 
 bool mypredicate(int i, int j) {
 	return (i == j);
 }
 
-Cache Algorithms::findCachedResult(std::vector<std::vector<Cache>>* cachedPaths, std::vector<int>* permutationVector)
-{
+void Algorithms::addToCurrentIterationCache(std::vector<std::vector<Cache>>* cache, Cache newEntry, int matrixSize, int snippetLength, int currentVertex) {
+	std::vector<Cache> tempC = { newEntry };
+	if (cache->empty()) {		
+		cache->insert(cache->begin(), tempC);
+
+		return;
+	}
+
+	std::vector<std::vector<Cache>>::iterator i = cache->end();
+	std::advance(i, -1);
+	if ((*i).front().path.size() < matrixSize - 2) {
+		std::vector<Cache> tempCacheV = *i;
+		updateCacheVector(tempCacheV, snippetLength, currentVertex);
+		cache->push_back(tempCacheV);
+	}
+
+	i = cache->end();
+	std::advance(i, -1);
+	do {
+		i--;
+		if ((*i).front().path.size() >= matrixSize - 2) continue;
+
+		std::vector<Cache> tempCacheV = *i;
+		updateCacheVector(tempCacheV, snippetLength, currentVertex);
+		i++;
+		(*i).insert((*i).end(), std::make_move_iterator(tempCacheV.begin()),
+			std::make_move_iterator(tempCacheV.end()));
+		i--;
+	} while (i != cache->begin());
+	
+	cache->begin()->push_back(newEntry);
+}
+
+void Algorithms::updateCacheVector(std::vector<Cache>& cache, int snippetLength, int currentVertex) {
+	for (Cache& c : cache) {
+		c.pathLength += snippetLength;
+		c.path.insert(c.path.begin(), currentVertex);
+	}
+}
+
+Cache Algorithms::findCachedResult(std::vector<std::vector<Cache>>* cachedPaths, std::vector<int>* permutationVector) {
 	Cache result;
 	result.path = { -1 };
 	result.pathLength = -1;

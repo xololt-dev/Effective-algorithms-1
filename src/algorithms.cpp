@@ -290,6 +290,22 @@ void Algorithms::dynamicProgramming(Matrix* matrix) {
 	std::cout << "\n";
 }
 
+void Algorithms::dP(Matrix* matrix) {
+	int shortestPath = INT_MAX;
+	std::vector<std::vector<int>>* pointerMat = &(matrix->mat);
+	const int matrixSize = matrix->size;
+	int currentVertex = 0;
+	int vertexCode = 1;
+	std::vector<int> fastestPath;
+
+	for (int i = 1; i < matrixSize; i++) {
+		// zaczyna od 1,2,3... matrixSize-1
+		vertexCode *= 2;
+		// rekurencyjnie dpHelp
+		dpHelp(vertexCode, &fastestPath, matrix);
+	}
+}
+
 bool mypredicate(int i, int j) {
 	return (i == j);
 }
@@ -484,4 +500,53 @@ void Algorithms::bruteHelperMultithread(std::vector<int>* orderQueue, int* pathL
 
 	// zamiast return
 	*pathLength = shortestPath;
+}
+
+// vertexCode pokazuje które wierzcho³ki odwiedzone (binarnie)
+// orderQueue bêdzie odwrotne
+int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, Matrix* matrix) {
+	const int matrixSize = matrix->size;
+	int tempVertexCode = vertexCode;
+	int bestResult = INT_MAX;
+	std::vector<int> toVisit;
+
+	// sprawdzenie które wierzcho³ki mo¿na dodaæ
+	for (int i = 0; i < matrixSize; i++) {
+		int rest = fmodf((float)tempVertexCode, 2.0f);
+		// jeœli nie odwiedzone
+		if (!rest) {
+			toVisit.push_back(i);
+		}
+		tempVertexCode >>= 1;
+	}
+
+	// jeœli pozostanie tylko koñcowe
+	if (toVisit.size() == 1) {
+		orderQueue->push_back(0);
+		// bestResult = 0;
+		return 0;
+	}
+
+	// iteracja przez te wierzcho³ki i sprawdzenie
+	std::vector<int> bestPath, tempPath;
+	int tempResult;
+
+	for (int i : toVisit) {
+		// unikamy 0
+		if (i) {
+			tempVertexCode = vertexCode + (int)pow(2, i);
+			tempResult = dpHelp(tempVertexCode, &tempPath, matrix);
+			// tempResult + œcie¿ka do i
+
+			if (tempResult < bestResult) {
+				bestResult = tempResult;
+				bestPath = tempPath;
+				bestPath.push_back(i);
+			}
+		}
+	}
+
+	*orderQueue = bestPath;
+	
+	return bestResult;
 }

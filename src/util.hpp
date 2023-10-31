@@ -39,6 +39,7 @@ private:
 
 	int bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix);
 	static void bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<int> permutation, int permutationNumber, Matrix* matrix);
+	int dpHelp(int vertexCode, std::vector<int>* orderQueue, Matrix* matrix);
 
 	void addToCurrentIterationCache(std::vector<std::vector<Cache>>* cache, Cache newEntry, int matrixSize, int snippetLength, int currentVertex);
 	void updateCacheVector(std::vector<Cache>& cache, int snippetLength, int currentVertex);
@@ -48,6 +49,7 @@ public:
 	void bruteForce(Matrix* matrix, int multithread = 1);
 	void branchAndBound(std::vector<std::vector<int>> matrix);
 	void dynamicProgramming(Matrix* matrix);
+	void dP(Matrix* matrix);
 };
 
 void clear();

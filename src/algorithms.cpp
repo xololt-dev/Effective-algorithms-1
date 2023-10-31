@@ -292,18 +292,31 @@ void Algorithms::dynamicProgramming(Matrix* matrix) {
 
 void Algorithms::dP(Matrix* matrix) {
 	int shortestPath = INT_MAX;
-	std::vector<std::vector<int>>* pointerMat = &(matrix->mat);
+	std::vector<std::vector<int>> matAddress = matrix->mat;
 	const int matrixSize = matrix->size;
 	int currentVertex = 0;
 	int vertexCode = 1;
-	std::vector<int> fastestPath;
+	std::vector<int> fastestPath, tempPath;
 
 	for (int i = 1; i < matrixSize; i++) {
 		// zaczyna od 1,2,3... matrixSize-1
 		vertexCode *= 2;
 		// rekurencyjnie dpHelp
-		dpHelp(vertexCode, &fastestPath, matrix);
+		int tempLength = dpHelp(vertexCode, &tempPath, matrix);
+		// tempPath + droga do i
+		tempLength += matAddress[i][0];
+
+		if (tempLength < shortestPath) {
+			shortestPath = tempLength;
+			fastestPath = tempPath;
+		}
 	}
+	fastestPath.push_back(0);
+	std::reverse(fastestPath.begin(), fastestPath.end());
+
+	this->pathLength = shortestPath;
+	this->vertexOrder = fastestPath;
+	displayResults();
 }
 
 bool mypredicate(int i, int j) {
@@ -510,6 +523,8 @@ int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, Matrix* mat
 	int bestResult = INT_MAX;
 	std::vector<int> toVisit;
 
+	std::cout << "VertexCode: " << vertexCode << "\n";
+
 	// sprawdzenie które wierzcho³ki mo¿na dodaæ
 	for (int i = 0; i < matrixSize; i++) {
 		int rest = fmodf((float)tempVertexCode, 2.0f);
@@ -520,10 +535,16 @@ int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, Matrix* mat
 		tempVertexCode >>= 1;
 	}
 
+	for (int i : toVisit) {
+		std::cout << i << " ";
+	}
+	std::cout << "\n";
+
 	// jeœli pozostanie tylko koñcowe
 	if (toVisit.size() == 1) {
 		orderQueue->push_back(0);
 		// bestResult = 0;
+		std::cout << "Return 0\n";
 		return 0;
 	}
 
@@ -537,6 +558,7 @@ int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, Matrix* mat
 			tempVertexCode = vertexCode + (int)pow(2, i);
 			tempResult = dpHelp(tempVertexCode, &tempPath, matrix);
 			// tempResult + œcie¿ka do i
+			tempResult += matrix->mat[tempPath.back()][i];
 
 			if (tempResult < bestResult) {
 				bestResult = tempResult;
@@ -547,6 +569,7 @@ int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, Matrix* mat
 	}
 
 	*orderQueue = bestPath;
-	
+	std::cout << "Return " << bestResult << "\n";
+
 	return bestResult;
 }

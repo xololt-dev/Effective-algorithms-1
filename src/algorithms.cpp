@@ -5,7 +5,7 @@
 #include <unordered_set>
 
 bool operator==(const Cache& lhs, const Cache& rhs) {
-	return (lhs.path == rhs.path); //&& lhs.pathLength == rhs.pathLength);
+	return (lhs.vertexCode == rhs.vertexCode) && (lhs.path.back() == rhs.path.back());//(lhs.path == rhs.path); //&& lhs.pathLength == rhs.pathLength);
 }
 
 void Algorithms::bruteForce(Matrix* matrix, int multithread) {
@@ -291,31 +291,65 @@ void Algorithms::dynamicProgramming(Matrix* matrix) {
 }
 
 void Algorithms::dP(Matrix* matrix) {
+	std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
+
 	int shortestPath = INT_MAX;
+	this->pathLength = shortestPath;
 	std::vector<std::vector<int>> matAddress = matrix->mat;
 	const int matrixSize = matrix->size;
 	int currentVertex = 0;
 	int vertexCode = 1;
 	std::vector<int> fastestPath, tempPath;
 
+	for (int i = 1; i < matrixSize - 2; i++) vertexCode *= i;
+
+	// cachedPaths.reserve(vertexCode);
+	// std::cout << cachedPaths.bucket_count() << '\n';
+	cachedPathsV.reserve(matrixSize - 2);
+	
+	for (std::vector<Cache> v : cachedPathsV) {
+
+	}
+
+	vertexCode = 1;
+
 	for (int i = 1; i < matrixSize; i++) {
 		// zaczyna od 1,2,3... matrixSize-1
 		vertexCode *= 2;
 		// rekurencyjnie dpHelp
-		int tempLength = dpHelp(vertexCode, &tempPath, matrix);
+		int tempLength = dpHelp(vertexCode, &tempPath, i, matrix);
+		if (tempLength == INT_MAX) continue;
 		// tempPath + droga do i
-		tempLength += matAddress[i][0];
+		tempLength += matAddress[i][0] + matAddress[tempPath.back()][i];
+		// std::cout << "Koniec do 0: " << matAddress[i][0] << "\n";
 
-		if (tempLength < shortestPath) {
-			shortestPath = tempLength;
-			fastestPath = tempPath;
+		if (tempLength < this->pathLength) {
+			this->pathLength = tempLength;
+			tempPath.push_back(i);
+			this->vertexOrder = tempPath;
 		}
 	}
-	fastestPath.push_back(0);
-	std::reverse(fastestPath.begin(), fastestPath.end());
+	// fastestPath.push_back(0);
+	std::reverse(this->vertexOrder.begin(), this->vertexOrder.end());
+	this->vertexOrder.pop_back();
 
-	this->pathLength = shortestPath;
-	this->vertexOrder = fastestPath;
+	// this->pathLength = shortestPath;
+	// this->vertexOrder = fastestPath;
+	this->executionTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - now);
+	
+	/*
+	for (Cache c : cachedPaths) {
+		for (int i : c.path) {
+			std::cout << i << " ";
+		}
+		std::cout << "\n";
+	}
+	*/
+	// std::cout << cachedPaths.size() << "\n";
+	cachedPaths.clear();
+	// cachedPaths.rehash(0);
+	// cachedPaths.reserve(1);
+
 	displayResults();
 }
 
@@ -517,13 +551,11 @@ void Algorithms::bruteHelperMultithread(std::vector<int>* orderQueue, int* pathL
 
 // vertexCode pokazuje które wierzcho³ki odwiedzone (binarnie)
 // orderQueue bêdzie odwrotne
-int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, Matrix* matrix) {
+int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, int previousVertex, Matrix* matrix) {
 	const int matrixSize = matrix->size;
 	int tempVertexCode = vertexCode;
 	int bestResult = INT_MAX;
 	std::vector<int> toVisit;
-
-	std::cout << "VertexCode: " << vertexCode << "\n";
 
 	// sprawdzenie które wierzcho³ki mo¿na dodaæ
 	for (int i = 0; i < matrixSize; i++) {
@@ -535,41 +567,72 @@ int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, Matrix* mat
 		tempVertexCode >>= 1;
 	}
 
-	for (int i : toVisit) {
-		std::cout << i << " ";
-	}
-	std::cout << "\n";
-
 	// jeœli pozostanie tylko koñcowe
 	if (toVisit.size() == 1) {
 		orderQueue->push_back(0);
-		// bestResult = 0;
-		std::cout << "Return 0\n";
 		return 0;
 	}
 
 	// iteracja przez te wierzcho³ki i sprawdzenie
 	std::vector<int> bestPath, tempPath;
-	int tempResult;
+	int tempResult, pathBack = 0;
+	Cache tempCache;
 
 	for (int i : toVisit) {
 		// unikamy 0
 		if (i) {
 			tempVertexCode = vertexCode + (int)pow(2, i);
-			tempResult = dpHelp(tempVertexCode, &tempPath, matrix);
-			// tempResult + œcie¿ka do i
+			tempCache.path = { i };
+			tempCache.vertexCode = tempVertexCode;
+
+			std::unordered_set<Cache>::iterator iterCache = cachedPaths.begin();
+			for (; iterCache != cachedPaths.end(); iterCache++) {
+				if (iterCache->vertexCode == tempVertexCode && iterCache->path.back() == i) {
+					/*
+					std::cout << "Cache found\n";
+					std::cout << iterCache->vertexCode << " == " << tempVertexCode << "\n"; // << "   " << iterCache->path.back() << " == " << i << "\n";
+					for (int k : iterCache->path) {
+						std::cout << k << " ";
+					}
+					std::cout << "   ";
+					for (int j : toVisit) {
+						std::cout << j << " ";
+					}
+					std::cout << "\n";
+					*/
+					tempPath = iterCache->path;
+					tempResult = iterCache->pathLength;
+					goto FOUND_CACHE;
+				}
+			}
+
+			tempResult = dpHelp(tempVertexCode, &tempPath, i, matrix);
+			if (tempResult == INT_MAX) continue;
 			tempResult += matrix->mat[tempPath.back()][i];
 
-			if (tempResult < bestResult) {
+			// przypisanie wartoœci cache
+			tempCache.pathLength = tempResult;
+			tempCache.path = tempPath;
+			tempCache.vertexCode = tempVertexCode;
+			tempCache.path.push_back(i);
+			cachedPaths.insert(tempCache);
+
+			if (tempResult > this->pathLength) continue;
+			// tempResult + œcie¿ka do i
+			tempPath.push_back(i);
+
+			FOUND_CACHE:
+			int currentPathBack = matrix->mat[i][previousVertex];
+			
+			if (tempResult + currentPathBack < bestResult + pathBack) {
 				bestResult = tempResult;
+				pathBack = currentPathBack;
 				bestPath = tempPath;
-				bestPath.push_back(i);
+				// bestPath.push_back(i);
 			}
 		}
 	}
 
-	*orderQueue = bestPath;
-	std::cout << "Return " << bestResult << "\n";
-
+	if (bestResult != INT_MAX) *orderQueue = bestPath;
 	return bestResult;
 }

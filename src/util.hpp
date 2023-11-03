@@ -1,6 +1,7 @@
 #include <fstream>
 #include <vector>
 #include <chrono>
+#include <unordered_set>
 
 class Matrix {
 public:
@@ -15,6 +16,7 @@ public:
 };
 
 struct Cache {
+	int vertexCode = 0;
 	std::vector<int> path;
 	int pathLength = 0;
 };
@@ -25,7 +27,7 @@ class std::hash<Cache>
 public:
 	size_t operator()(const Cache& cache) const
 	{
-		return cache.path.size() ^ cache.path.front() ^ cache.path.back();//^ cache.pathLength;
+		return cache.vertexCode; //static_cast<size_t>(cache.vertexCode); // << cache.path.back() << cache.path.size(); //cache.path.size() ^ cache.path.front() ^ cache.path.back();//^ cache.pathLength;
 	}
 };
 
@@ -35,11 +37,14 @@ private:
 	std::vector<int> vertexOrder;
 	std::chrono::duration<double> executionTime;
 
+	std::unordered_set<Cache> cachedPaths;
+	std::vector<std::vector<Cache>>cachedPathsV;
+
 	void displayResults();
 
 	int bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix);
 	static void bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<int> permutation, int permutationNumber, Matrix* matrix);
-	int dpHelp(int vertexCode, std::vector<int>* orderQueue, Matrix* matrix);
+	int dpHelp(int vertexCode, std::vector<int>* orderQueue, int previousVertex, Matrix* matrix);
 
 	void addToCurrentIterationCache(std::vector<std::vector<Cache>>* cache, Cache newEntry, int matrixSize, int snippetLength, int currentVertex);
 	void updateCacheVector(std::vector<Cache>& cache, int snippetLength, int currentVertex);

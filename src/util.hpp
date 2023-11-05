@@ -40,7 +40,7 @@ private:
 
 	// std::unordered_set<Cache> cachedPaths;
 	// std::vector<std::vector<Cache>>cachedPathsV;
-	std::vector<Cache>* cachedPathsV;
+	std::vector<std::vector<Cache>> cachedPathsV;
 	std::vector<std::unordered_map<int, Cache>> cachedPathsNew;
 
 	void displayResults();
@@ -49,6 +49,7 @@ private:
 	static void bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<int> permutation, int permutationNumber, Matrix* matrix);
 	int dpHelp(int vertexCode, std::vector<int>* orderQueue, int previousVertex, Matrix* matrix);
 	int newDPHelper(int maskCode, int currentVertex, std::vector<int>* vertexOrder, Matrix* matrix);
+	int newDPHelperV(int maskCode, int currentVertex, std::vector<int>* vertexOrder, Matrix* matrix);
 
 public:
 	void bruteForce(Matrix* matrix, int multithread = 1);
@@ -56,6 +57,7 @@ public:
 	// void dynamicProgramming(Matrix* matrix);
 	void dP(Matrix* matrix);
 	void newDP(Matrix* matrix);
+	void newDPV(Matrix* matrix);
 };
 
 void clear();

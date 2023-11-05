@@ -17,11 +17,18 @@ public:
 };
 
 struct Cache {
-	int vertexCode = 0;
+	// int vertexCode = 0;
 	std::vector<int> path;
 	int pathLength = 0;
-};
+	Cache() : path({0}), pathLength(0) {
 
+	}
+
+	Cache(std::vector<int> pathIn, int pathLengthIn) : path(pathIn), pathLength(pathLengthIn) {
+
+	}
+};
+/*
 template <>
 class std::hash<Cache>
 {
@@ -31,7 +38,7 @@ public:
 		return cache.vertexCode; //static_cast<size_t>(cache.vertexCode); // << cache.path.back() << cache.path.size(); //cache.path.size() ^ cache.path.front() ^ cache.path.back();//^ cache.pathLength;
 	}
 };
-
+*/
 class Algorithms {
 private:
 	int pathLength;

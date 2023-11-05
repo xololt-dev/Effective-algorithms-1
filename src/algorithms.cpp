@@ -6,9 +6,11 @@
 #include <unordered_map>
 #include <bitset>
 
+/*
 bool operator==(const Cache& lhs, const Cache& rhs) {
 	return (lhs.vertexCode == rhs.vertexCode) && (lhs.path.back() == rhs.path.back());//(lhs.path == rhs.path); //&& lhs.pathLength == rhs.pathLength);
 }
+*/
 
 void Algorithms::bruteForce(Matrix* matrix, int multithread) {
 	std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
@@ -209,11 +211,8 @@ void Algorithms::newDP(Matrix* matrix) {
 	const int matrixSize = matrix->size;
 	int result = INT_MAX, tempResult;
 	// cachedPathsV = new std::vector<Cache>[matrixSize];
-	Cache defaultCache;
-	defaultCache.path = { 0 };
-	defaultCache.pathLength = 0;
-	defaultCache.vertexCode = 0;
-	std::vector<Cache> insideTempVec((int)(1 << matrixSize), defaultCache);
+	// defaultCache.vertexCode = 0;
+	std::vector<Cache> insideTempVec((int)(1 << matrixSize), Cache());
 	std::unordered_map<int, Cache> insideTempMap;
 	cachedPathsNew.resize(matrixSize - 1, insideTempMap); //insideTempVec);
 	std::vector<int> vertexOrder, tempOrder;
@@ -258,7 +257,7 @@ void Algorithms::newDPV(Matrix* matrix) {
 	Cache defaultCache;
 	defaultCache.path = { 0 };
 	defaultCache.pathLength = 0;
-	defaultCache.vertexCode = 0;
+	// defaultCache.vertexCode = 0;
 	std::vector<Cache> insideTempVec((int)(1 << matrixSize), defaultCache);
 	cachedPathsV.resize(matrixSize - 1, insideTempVec);
 	std::vector<int> vertexOrder, tempOrder;
@@ -443,11 +442,11 @@ int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, int previou
 		if (i) {
 			tempVertexCode = vertexCode + (int)pow(2, i);
 			tempCache.path = { i };
-			tempCache.vertexCode = tempVertexCode;
+			//tempCache.vertexCode = tempVertexCode;
 			
 			for (int j = 0; j < matrixSize - 2; j++) {
 				for (Cache c : cachedPathsV[j]) {
-					if (c.vertexCode == tempVertexCode && c.path.back() == i) {
+					if (/*c.vertexCode == tempVertexCode &&*/ c.path.back() == i) {
 						tempPath = c.path;
 						tempResult = c.pathLength;
 						goto FOUND_CACHE;
@@ -485,7 +484,7 @@ int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, int previou
 			// przypisanie wartoœci cache
 			tempCache.pathLength = tempResult;
 			tempCache.path = tempPath;
-			tempCache.vertexCode = tempVertexCode;
+			// tempCache.vertexCode = tempVertexCode;
 			tempCache.path.push_back(i);
 			// cachedPaths.insert(tempCache);
 			cacheExists = 0;
@@ -494,7 +493,7 @@ int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, int previou
 			if (!cachedPathsV[tempCache.path.size() - 2].empty()) {
 				for (Cache c : cachedPathsV[tempCache.path.size() - 2]) {
 					if (c.pathLength == tempCache.pathLength
-						&& c.vertexCode == tempCache.vertexCode
+						/* && c.vertexCode == tempCache.vertexCode */
 						&& c.path.front() == tempCache.path.front()
 						&& c.path.back() == tempCache.path.back()) {
 						cacheExists = 1;
@@ -585,10 +584,7 @@ int Algorithms::newDPHelper(int maskCode, int currentVertex, std::vector<int>* v
 	std::bitset<32> countBit (maskCode);
 	if (countBit.count() > matrixSize - 2) return result;
 
-	Cache tempCache;
-	tempCache.path = resultOrder;
-	tempCache.pathLength = result;
-	cachedPathsNew[currentVertex - 1].insert({ maskCode, tempCache });
+	cachedPathsNew[currentVertex - 1].insert({ maskCode, Cache(resultOrder, result) });
 	/*
 	cachedPathsNew[currentVertex - 1][maskCode].path = resultOrder;
 	cachedPathsNew[currentVertex - 1][maskCode].pathLength = result;

@@ -38,7 +38,8 @@ void algorithmMenu() {
 
 		case '4':
 			// algo.dynamicProgramming((Matrix*) &matrix);
-			algo.dP((Matrix*) &matrix);
+			// algo.dP((Matrix*) &matrix);
+			algo.newDP((Matrix*) &matrix);
 			break;
 		}
 	} while (option != '0');

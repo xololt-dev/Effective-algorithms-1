@@ -2,6 +2,7 @@
 #include <vector>
 #include <chrono>
 #include <unordered_set>
+#include <unordered_map>
 
 class Matrix {
 public:
@@ -37,24 +38,24 @@ private:
 	std::vector<int> vertexOrder;
 	std::chrono::duration<double> executionTime;
 
-	std::unordered_set<Cache> cachedPaths;
-	std::vector<std::vector<Cache>>cachedPathsV;
+	// std::unordered_set<Cache> cachedPaths;
+	// std::vector<std::vector<Cache>>cachedPathsV;
+	std::vector<Cache>* cachedPathsV;
+	std::vector<std::unordered_map<int, Cache>> cachedPathsNew;
 
 	void displayResults();
 
 	int bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix);
 	static void bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<int> permutation, int permutationNumber, Matrix* matrix);
 	int dpHelp(int vertexCode, std::vector<int>* orderQueue, int previousVertex, Matrix* matrix);
-
-	void addToCurrentIterationCache(std::vector<std::vector<Cache>>* cache, Cache newEntry, int matrixSize, int snippetLength, int currentVertex);
-	void updateCacheVector(std::vector<Cache>& cache, int snippetLength, int currentVertex);
-	Cache findCachedResult(std::vector<std::vector<Cache>>* cachedPaths, std::vector<int>* permutationVector);
+	int newDPHelper(int maskCode, int currentVertex, std::vector<int>* vertexOrder, Matrix* matrix);
 
 public:
 	void bruteForce(Matrix* matrix, int multithread = 1);
 	void branchAndBound(std::vector<std::vector<int>> matrix);
-	void dynamicProgramming(Matrix* matrix);
+	// void dynamicProgramming(Matrix* matrix);
 	void dP(Matrix* matrix);
+	void newDP(Matrix* matrix);
 };
 
 void clear();

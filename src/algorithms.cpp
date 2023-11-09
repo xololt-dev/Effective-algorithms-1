@@ -210,10 +210,15 @@ void Algorithms::newDP(Matrix* matrix) {
 
 	const int matrixSize = matrix->size;
 	int result = INT_MAX, tempResult = 0;
+	// cachedPathsV = new std::vector<Cache>[matrixSize];
+	// defaultCache.vertexCode = 0;
+	// std::vector<Cache> insideTempVec((int)(1 << matrixSize), Cache());
 	std::unordered_map<int, Cache> insideTempMap;
 	cachedPathsNew.resize(matrixSize - 1, insideTempMap); //insideTempVec);
-	for (auto& a : cachedPathsNew) 
-		a.reserve(pow(2, matrixSize - 2));
+	for (auto& a : cachedPathsNew) {
+		a.reserve(pow(2, matrixSize - 2));//(matrixSize * matrixSize / 2);
+		// a.rehash(matrixSize);
+	}
 	std::vector<short> vertexOrder, tempOrder;
 
 	// odwiedz kazdy wierzcholek oprócz startu (0)

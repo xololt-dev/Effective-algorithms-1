@@ -18,11 +18,11 @@ void Algorithms::bruteForce(Matrix* matrix, int multithread) {
 	if (multithread) {
 		// int maxThreadsPossible = std::thread::hardware_concurrency();
 
-		std::vector<std::vector<int>> orders; // results dump
+		std::vector<std::vector<short>> orders; // results dump
 		std::vector<int> pathLengths; // results dump
 		int matrixSize = matrix->size;
 
-		std::vector<int> permutationVector;
+		std::vector<short> permutationVector;
 		permutationVector.reserve(matrixSize);
 		for (int i = 1; i < matrixSize; i++) permutationVector.push_back(i);
 		int previousVertex = 1;
@@ -33,7 +33,7 @@ void Algorithms::bruteForce(Matrix* matrix, int multithread) {
 		vectorOfThreadsInFlight.reserve(matrixSize - 1);
 		orders.resize(matrixSize - 1);
 		pathLengths.resize(matrixSize - 1, INT_MAX);
-		std::vector<std::vector<int>>::iterator ordersIterator = orders.begin();
+		std::vector<std::vector<short>>::iterator ordersIterator = orders.begin();
 		std::vector<int>::iterator pathLengthsIterator = pathLengths.begin();
 
 		// tworzenie w¹tków dla zestawów permutacji
@@ -149,7 +149,7 @@ void Algorithms::dP(Matrix* matrix) {
 	const int matrixSize = matrix->size;
 	int currentVertex = 0;
 	int vertexCode = 1;
-	std::vector<int> fastestPath, tempPath;
+	std::vector<short> fastestPath, tempPath;
 
 	for (int i = 1; i < matrixSize - 3; i++) vertexCode *= i;
 
@@ -209,22 +209,23 @@ void Algorithms::newDP(Matrix* matrix) {
 	std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
 
 	const int matrixSize = matrix->size;
-	int result = INT_MAX, tempResult;
+	int result = INT_MAX, tempResult = 0;
 	// cachedPathsV = new std::vector<Cache>[matrixSize];
 	// defaultCache.vertexCode = 0;
 	std::vector<Cache> insideTempVec((int)(1 << matrixSize), Cache());
 	std::unordered_map<int, Cache> insideTempMap;
 	cachedPathsNew.resize(matrixSize - 1, insideTempMap); //insideTempVec);
-	std::vector<int> vertexOrder, tempOrder;
+	std::vector<short> vertexOrder, tempOrder;
 
 	// odwiedz kazdy wierzcholek oprócz startu (0)
 	for (int i = 1; i < matrixSize; i++) {
 		tempResult = newDPHelper((1 << matrixSize) - 1 - (int)pow(2, i), i, &tempOrder, matrix);
-
+		
 		if (tempResult + matrix->mat[i][0] < result) {
 			vertexOrder = tempOrder;
 			result = tempResult + matrix->mat[i][0];
 		}
+		//std::cout << "Cache hit rate: " << (double)cacheHit / (double)cacheLookup << "\n";
 	}
 
 	std::reverse(vertexOrder.begin(), vertexOrder.end());
@@ -245,6 +246,23 @@ void Algorithms::newDP(Matrix* matrix) {
 	*/
 	
 	// delete[] cachedPathsV;
+	/*
+	int totalS = 0, totalI = 0;
+	for (auto i : cachedPathsNew) {
+		totalS += i.bucket_count() * (sizeof(void*) + sizeof(size_t)) // bucket index
+			* 1.5; // estimated allocation overheads
+		totalI += i.bucket_count() * (sizeof(void*) + sizeof(size_t)) // bucket index
+			* 1.5; // estimated allocation overheads
+		for (auto a : i) {
+			totalS += a.second.path.size() * sizeof(short) + sizeof(Cache) + sizeof(void*); // data list
+			// (i.size() * (sizeof(Cache) + sizeof(void*)) 
+			totalI += a.second.path.size() * sizeof(int) + sizeof(Cache) + sizeof(void*); // data list
+		}
+	}
+	std::cout << "\nTotal short: " << totalS/8 << "\nTotal int: " << totalI/8 << "\n";
+	std::cout << "Smaller by: " << (double)totalS / (double)totalI << "\n";
+	*/
+
 	cachedPathsNew.clear();
 }
 
@@ -260,7 +278,7 @@ void Algorithms::newDPV(Matrix* matrix) {
 	// defaultCache.vertexCode = 0;
 	std::vector<Cache> insideTempVec((int)(1 << matrixSize), defaultCache);
 	cachedPathsV.resize(matrixSize - 1, insideTempVec);
-	std::vector<int> vertexOrder, tempOrder;
+	std::vector<short> vertexOrder, tempOrder;
 
 	// odwiedz kazdy wierzcholek oprócz startu (0)
 	for (int i = 1; i < matrixSize; i++) {
@@ -304,13 +322,14 @@ void Algorithms::displayResults() {
 	std::cout << "0\nCzas trwania algorytmu: " << executionTime.count() << "s\n";
 }
 
-int Algorithms::bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix) {
+int Algorithms::bruteHelperFunction(std::vector<short>* orderQueue, Matrix* matrix) {
 	int shortestPath = INT_MAX;
 	const int matrixSize = matrix->size;
 	std::vector<std::vector<int>>* pointerMat = &(matrix->mat);
-	std::vector<int> permutationVector;
+	std::vector<short> permutationVector;
 	std::vector<std::vector<int>>::iterator outerIter = pointerMat->begin();
-	std::vector<int>::iterator permutationIterator, innerIter = (*outerIter).begin();
+	std::vector<short>::iterator permutationIterator;
+	std::vector<int>::iterator innerIter = (*outerIter).begin();
 
 	permutationVector.reserve(matrixSize);
 	
@@ -355,12 +374,13 @@ int Algorithms::bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix
 	return shortestPath;
 }
 
-void Algorithms::bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<int> permutation, int permutationNumber, Matrix* matrix) {
+void Algorithms::bruteHelperMultithread(std::vector<short>* orderQueue, int* pathLength, std::vector<short> permutation, int permutationNumber, Matrix* matrix) {
 	int shortestPath = INT_MAX;
 	const int matrixSize = matrix->size;
 	std::vector<std::vector<int>>* pointerMat = &(matrix->mat);
 	std::vector<std::vector<int>>::iterator outerIter = pointerMat->begin();
-	std::vector<int>::iterator permutationIterator, innerIter = (*outerIter).begin();
+	std::vector<short>::iterator permutationIterator;
+	std::vector<int>::iterator innerIter = (*outerIter).begin();
 
 	do {
 		int previousVertex = 0;
@@ -403,7 +423,7 @@ void Algorithms::bruteHelperMultithread(std::vector<int>* orderQueue, int* pathL
 
 // vertexCode pokazuje które wierzcho³ki odwiedzone (binarnie)
 // orderQueue bêdzie odwrotne
-int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, int previousVertex, Matrix* matrix) {
+int Algorithms::dpHelp(int vertexCode, std::vector<short>* orderQueue, int previousVertex, Matrix* matrix) {
 	const int matrixSize = matrix->size;
 	// jeœli pozostanie tylko koñcowe
 	if (vertexCode == pow(2, matrixSize) - 2) {
@@ -432,7 +452,7 @@ int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, int previou
 	}
 	*/
 	// iteracja przez te wierzcho³ki i sprawdzenie
-	std::vector<int> bestPath, tempPath;
+	std::vector<short> bestPath, tempPath;
 	int tempResult, pathBack = 0;
 	Cache tempCache;
 	bool cacheExists = 0;
@@ -441,7 +461,7 @@ int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, int previou
 		// unikamy 0
 		if (i) {
 			tempVertexCode = vertexCode + (int)pow(2, i);
-			tempCache.path = { i };
+			tempCache.path = { (short) i };
 			//tempCache.vertexCode = tempVertexCode;
 			
 			for (int j = 0; j < matrixSize - 2; j++) {
@@ -526,7 +546,7 @@ int Algorithms::dpHelp(int vertexCode, std::vector<int>* orderQueue, int previou
 	return bestResult;
 }
 
-int Algorithms::newDPHelper(int maskCode, int currentVertex, std::vector<int>* vertexOrder, Matrix* matrix) {
+int Algorithms::newDPHelper(int maskCode, int currentVertex, std::vector<short>* vertexOrder, Matrix* matrix) {
 	// sprawdzenie maski
 	// jesli bit 0 i bit previousVertex jest zaznaczony, to odwiedzilismy wszystko inne
 	if (maskCode == 1) {
@@ -557,7 +577,7 @@ int Algorithms::newDPHelper(int maskCode, int currentVertex, std::vector<int>* v
 	int result = INT_MAX, tempResult;
 	const int matrixSize = matrix->size;
 	std::vector<std::vector<int>>& toMatrix = (matrix->mat);
-	std::vector<int> resultOrder, tempOrder;
+	std::vector<short> resultOrder, tempOrder;
 
 	for (int i = 0; i < matrixSize; i++) {
 		// nie odnosimy siê do tego samego vertexu lub
@@ -593,7 +613,7 @@ int Algorithms::newDPHelper(int maskCode, int currentVertex, std::vector<int>* v
 	return result;
 }
 
-int Algorithms::newDPHelperV(int maskCode, int currentVertex, std::vector<int>* vertexOrder, Matrix* matrix) {
+int Algorithms::newDPHelperV(int maskCode, int currentVertex, std::vector<short>* vertexOrder, Matrix* matrix) {
 	// sprawdzenie maski
 	// jesli bit 0 i bit previousVertex jest zaznaczony, to odwiedzilismy wszystko inne
 	if (maskCode == 1) {
@@ -624,7 +644,7 @@ int Algorithms::newDPHelperV(int maskCode, int currentVertex, std::vector<int>* 
 	int result = INT_MAX, tempResult;
 	const int matrixSize = matrix->size;
 	std::vector<std::vector<int>>& toMatrix = (matrix->mat);
-	std::vector<int> resultOrder, tempOrder;
+	std::vector<short> resultOrder, tempOrder;
 
 	for (int i = 0; i < matrixSize; i++) {
 		// nie odnosimy siê do tego samego vertexu lub

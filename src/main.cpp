@@ -40,7 +40,7 @@ void algorithmMenu() {
 			// algo.dynamicProgramming((Matrix*) &matrix);
 			// algo.dP((Matrix*) &matrix);
 			algo.newDP((Matrix*) &matrix);
-			algo.newDPV((Matrix*) &matrix);
+			// algo.newDPV((Matrix*) &matrix);
 			break;
 		}
 	} while (option != '0');

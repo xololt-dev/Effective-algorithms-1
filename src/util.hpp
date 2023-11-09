@@ -18,13 +18,13 @@ public:
 
 struct Cache {
 	// int vertexCode = 0;
-	std::vector<int> path;
+	std::vector<short> path;
 	int pathLength = 0;
 	Cache() : path({0}), pathLength(0) {
 
 	}
 
-	Cache(std::vector<int> pathIn, int pathLengthIn) : path(pathIn), pathLength(pathLengthIn) {
+	Cache(std::vector<short> pathIn, int pathLengthIn) : path(pathIn), pathLength(pathLengthIn) {
 
 	}
 };
@@ -42,7 +42,7 @@ public:
 class Algorithms {
 private:
 	int pathLength;
-	std::vector<int> vertexOrder;
+	std::vector<short> vertexOrder;
 	std::chrono::duration<double> executionTime;
 
 	// std::unordered_set<Cache> cachedPaths;
@@ -52,11 +52,11 @@ private:
 
 	void displayResults();
 
-	int bruteHelperFunction(std::vector<int>* orderQueue, Matrix* matrix);
-	static void bruteHelperMultithread(std::vector<int>* orderQueue, int* pathLength, std::vector<int> permutation, int permutationNumber, Matrix* matrix);
-	int dpHelp(int vertexCode, std::vector<int>* orderQueue, int previousVertex, Matrix* matrix);
-	int newDPHelper(int maskCode, int currentVertex, std::vector<int>* vertexOrder, Matrix* matrix);
-	int newDPHelperV(int maskCode, int currentVertex, std::vector<int>* vertexOrder, Matrix* matrix);
+	int bruteHelperFunction(std::vector<short>* orderQueue, Matrix* matrix);
+	static void bruteHelperMultithread(std::vector<short>* orderQueue, int* pathLength, std::vector<short> permutation, int permutationNumber, Matrix* matrix);
+	int dpHelp(int vertexCode, std::vector<short>* orderQueue, int previousVertex, Matrix* matrix);
+	int newDPHelper(int maskCode, int currentVertex, std::vector<short>* vertexOrder, Matrix* matrix);
+	int newDPHelperV(int maskCode, int currentVertex, std::vector<short>* vertexOrder, Matrix* matrix);
 
 public:
 	void bruteForce(Matrix* matrix, int multithread = 1);

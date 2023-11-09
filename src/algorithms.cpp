@@ -212,9 +212,13 @@ void Algorithms::newDP(Matrix* matrix) {
 	int result = INT_MAX, tempResult = 0;
 	// cachedPathsV = new std::vector<Cache>[matrixSize];
 	// defaultCache.vertexCode = 0;
-	std::vector<Cache> insideTempVec((int)(1 << matrixSize), Cache());
+	// std::vector<Cache> insideTempVec((int)(1 << matrixSize), Cache());
 	std::unordered_map<int, Cache> insideTempMap;
 	cachedPathsNew.resize(matrixSize - 1, insideTempMap); //insideTempVec);
+	for (auto& a : cachedPathsNew) {
+		a.reserve(pow(2, matrixSize - 2));//(matrixSize * matrixSize / 2);
+		// a.rehash(matrixSize);
+	}
 	std::vector<short> vertexOrder, tempOrder;
 
 	// odwiedz kazdy wierzcholek oprócz startu (0)
@@ -237,11 +241,11 @@ void Algorithms::newDP(Matrix* matrix) {
 	displayResults();
 
 	/*
-	for (std::unordered_map<int, Cache> vc : cachedPathsNew) {
-		for (auto c : vc) {
-			std::cout << c.first << ": " << c.second.pathLength << "  ";
-		}
-		std::cout << "\n";
+	for (std::unordered_map<int, Cache>& vc : cachedPathsNew) {
+	//	for (auto c : vc) {
+		std::cout << vc.size() << " " << vc.max_size() << "\n";//c.first << ": " << c.second.pathLength << "  ";
+//		}
+	//	std::cout << "\n";
 	}
 	*/
 	

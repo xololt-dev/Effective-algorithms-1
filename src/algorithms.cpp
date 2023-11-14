@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <bitset>
 #include <iomanip>
+#include <queue>
 
 void Algorithms::bruteForce(Matrix* matrix, int multithread) {
 	std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
@@ -97,6 +98,7 @@ void Algorithms::dynamicProgramming(Matrix* matrix) {
 
 	const int matrixSize = matrix->size;
 	int result = INT_MAX, tempResult = 0;
+	// rezerwacja wymaganej iloœci pamiêci
 	std::unordered_map<int, Cache> insideTempMap;
 	cachedPathsNew.resize(matrixSize - 1, insideTempMap);
 	for (auto& a : cachedPathsNew)
@@ -107,20 +109,22 @@ void Algorithms::dynamicProgramming(Matrix* matrix) {
 	for (int i = 1; i < matrixSize; i++) {
 		tempResult = dynamicHelperFunction((1 << matrixSize) - 1 - (int)pow(2, i), i, &tempOrder, matrix);
 		
+		// jeœli rezultat znaleziony przez helper function jest mniejszy od obecnego najmniejszego, ustaw tempResult jako obecne rozwi¹zanie
 		if (tempResult + matrix->mat[i][0] < result) {
 			vertexOrder = tempOrder;
 			result = tempResult + matrix->mat[i][0];
 		}
 	}
 
+	// kolejnoœæ otrzymywana z helper function jest w odwrotnej kolejnoœci
 	std::reverse(vertexOrder.begin(), vertexOrder.end());
 	vertexOrder.pop_back();
 	this->pathLength = result;
 	this->vertexOrder = vertexOrder;
 
 	this->executionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - now);
-	
-	cachedPathsNew.clear();
+
+	cachedPathsNew.clear();	
 }
 
 void Algorithms::benchmark(Matrix* matrix) {
@@ -129,7 +133,7 @@ void Algorithms::benchmark(Matrix* matrix) {
 
 	if (file.good()) {
 		file << std::fixed << std::setprecision(19);
-		/*
+		
 		for (int i = 4; i < 15; i++) {
 			std::cout << i << "\n--------------------\n";
 			for (int j = 0; j < 100; j++) {
@@ -137,23 +141,19 @@ void Algorithms::benchmark(Matrix* matrix) {
 				file << i;
 				dynamicProgramming(matrix);
 				file << ";" << executionTime.count();
-				//std::this_thread::sleep_for(std::chrono::milliseconds(200));
 				bruteForce(matrix, 1);
 				file << ";" << executionTime.count();
-				//std::this_thread::sleep_for(std::chrono::milliseconds(200));
 				bruteForce(matrix, 0);
 				file << ";" << executionTime.count() << "\n";
-				//std::this_thread::sleep_for(std::chrono::milliseconds(200));
 			}
 		}
-		*/
+		
 		std::cout << 15 << "\n--------------------\n";
 		for (int j = 0; j < 100; j++) {			
 			matrix->generate(15);
 			file << 15;
 			dynamicProgramming(matrix);
 			file << ";" << executionTime.count();
-			//std::this_thread::sleep_for(std::chrono::milliseconds(200));
 			bruteForce(matrix, 1);
 			file << ";" << executionTime.count() << "\n";
 		}
@@ -164,7 +164,6 @@ void Algorithms::benchmark(Matrix* matrix) {
 				file << i;
 				dynamicProgramming(matrix);
 				file << ";" << executionTime.count() << "\n";
-				std::this_thread::sleep_for(std::chrono::milliseconds(200));
 			}
 		}
 
@@ -321,11 +320,162 @@ int Algorithms::dynamicHelperFunction(int maskCode, int currentVertex, std::vect
 	// jak nie ma mniejszego problemu, daj wynik
 	
 	*vertexOrder = resultOrder;
-	// sprawdzenie dodatkowe czy zapisaæ do cache
+	// sprawdzenie dodatkowe czy zapisaæ do cache, 
+	// jeœli za d³ugi ci¹g (nie do wykorzystania), nie wpisujemy do Cache
 	std::bitset<32> countBit (maskCode);
 	if (countBit.count() > matrixSize - 2) return result;
 
 	cachedPathsNew[currentVertex - 1].insert({ maskCode, Cache(resultOrder, result) });
 
 	return result;
+}
+
+Node::Node(int vertex, Node* parentNode, Matrix* matrix, int parentCost) {
+	childMatrix = *matrix;
+	vertexNumber = vertex;
+	parent = parentNode;
+	cost = parentCost;
+}
+
+void Node::getChildrenNodes() {
+	int verNumber = vertexNumber;
+	for (int k = 0; k < childMatrix.size; ++k) {
+		std::vector<int>* row = &childMatrix.mat[k];
+		if ((*row)[verNumber] != -1 && k != verNumber) { //Dodawanie potomkÃ³w
+			Node* newChildNode = new Node(k, this, &childMatrix, cost + childMatrix.mat[k][verNumber]);
+			childrenNodes.push_back(newChildNode);
+		}
+	}
+}
+
+int Node::reduceColumns() {
+	int columnsReductionCost = 0;
+	int minValue;
+	for (int i = 0; i < childMatrix.size; ++i) {
+		minValue = INT_MAX;
+		std::vector<int>* column = &childMatrix.mat[i];
+		for (int k = 0; k < column->size(); ++k) {
+			if ((*column)[k] < minValue && i != k && (*column)[k] > -1) {
+				minValue = (*column)[k];
+			}
+		}
+		if (minValue != INT_MAX) {
+			columnsReductionCost += minValue;
+			for (int j = 0; j < column->size(); ++j) {
+				if ((*column)[j] > 0)  (*column)[j] -= minValue;
+			}
+		}
+	}
+	//childMatrix.display();
+	//std::cout << "Redukcja kolumn: " << columnsReductionCost << "\n";
+	return columnsReductionCost;
+}
+
+int Node::reduceRows() {
+	int rowsReductionCost = 0;
+	int minValue;
+	for (int i = 0; i < childMatrix.size; ++i) {
+		minValue = INT_MAX;
+		for (int k = 0; k < childMatrix.size; ++k) {
+			std::vector<int>* row = &childMatrix.mat[k];
+			if ((*row)[i] < minValue && i != k && (*row)[i]>-1) minValue = (*row)[i];
+		}
+		if (minValue != INT_MAX) {
+			rowsReductionCost += minValue;
+			for (int k = 0; k < childMatrix.size; ++k) {
+				std::vector<int>* row = &childMatrix.mat[k];
+				if ((*row)[i] > 0) (*row)[i] -= minValue;
+			}
+		}
+	}
+	//childMatrix.display();
+	//std::cout << "Redukcja rzedow: " << rowsReductionCost << "\n";
+	return rowsReductionCost;
+}
+
+void Node::makeInfinity(int first, int second) {
+	if (parent == nullptr) return;
+	auto* row = &childMatrix.mat[second];
+	for (int i = 0; i < row->size(); ++i) {
+		(*row)[i] = -1;
+	}
+	for (int i = 0; i < row->size(); ++i) {
+		childMatrix.mat[i][first] = -1;
+	}
+	Node* pointer = this;
+	while (pointer->parent != nullptr)
+	{
+		childMatrix.mat[pointer->parent->vertexNumber][second] = -1;
+		pointer = pointer->parent;
+	}
+};
+
+int Node::reduceMatrix() {
+	int reductionCost = reduceRows() + reduceColumns();
+	cost += reductionCost;
+	return reductionCost;
+}
+
+std::vector<int> Node::getPath()
+{
+	Node* pointer = this;
+	std::vector<int> returnVector;
+	while (pointer->parent != nullptr)
+	{
+		returnVector.push_back(pointer->vertexNumber);
+		pointer = pointer->parent;
+	}
+	returnVector.push_back(pointer->vertexNumber);
+	return returnVector;
+}
+
+void Algorithms::branchAndBound(Matrix* matrix) {
+	std::chrono::time_point<std::chrono::steady_clock> now = std::chrono::steady_clock::now();
+
+	auto compare = [](Node* x, Node* y) {return x->cost > y->cost; };
+	int finalcost = INT_MAX;
+	std::vector<int> finalPath;
+	std::priority_queue<Node*, std::vector<Node*>, decltype(compare)>queue(compare);
+	Node* root = new Node(0, nullptr, matrix, 0);
+	root->reduceMatrix();
+	queue.push(root);
+	while (!queue.empty()) {
+		
+		//std::cout << "==============\n";
+		if (queue.top()->cost > finalcost) {
+			break;
+		}
+
+		auto node = queue.top();
+		/*
+		std::cout << "Node cost: " << node->cost << "\n";
+		std::cout << "Node matrix: \n";
+		node->childMatrix.display();
+
+		std::cout << "===========\n";
+		*/
+		queue.pop();
+		node->getChildrenNodes();
+		if (node->childrenNodes.size() != 0)
+		{
+			for (int i = 0; i < node->childrenNodes.size(); ++i) {
+				node->childrenNodes[i]->makeInfinity(node->vertexNumber, node->childrenNodes[i]->vertexNumber);
+				node->childrenNodes[i]->reduceMatrix();
+				queue.push(node->childrenNodes[i]);
+			}
+		}
+		else {
+			finalcost = node->cost;
+			finalPath = node->getPath();
+		}
+	}
+	this->executionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - now);
+	
+	std::move(finalPath.begin(), finalPath.end(), this->vertexOrder);
+	this->pathLength = finalcost;
+	std::cout << "FINAL PATH:" << std::endl;
+	for (int i = finalPath.size() - 1; i > -1; --i) {
+		std::cout << " " << finalPath[i] << " " << std::endl;
+	}
+	std::cout << "FINAL PATH COST: " << finalcost << std::endl;
 }

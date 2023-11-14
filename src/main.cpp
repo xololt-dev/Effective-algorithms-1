@@ -33,7 +33,8 @@ void algorithmMenu() {
 			break;
 
 		case '3':
-			// menu_list();
+			algo.branchAndBound((Matrix*)&matrix);
+			algo.displayResults();
 			break;
 
 		case '4':

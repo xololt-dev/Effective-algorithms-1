@@ -16,6 +16,22 @@ public:
 	void display();
 };
 
+class Node {
+public:
+	int vertexNumber;
+	Node* parent = nullptr;
+	Matrix childMatrix;
+	std::vector<Node*> childrenNodes;
+	void getChildrenNodes();
+	void makeInfinity(int first, int second);
+	int reduceRows();
+	int reduceColumns();
+	int reduceMatrix();
+	std::vector<int> getPath();
+	int cost;
+	Node(int vertex, Node* parentNode, Matrix* matrix, int parentCost);
+};
+
 struct Cache {
 	std::vector<short> path;
 	int pathLength = 0;
@@ -41,7 +57,7 @@ private:
 
 public:
 	void bruteForce(Matrix* matrix, int multithread = 1);
-	void branchAndBound(std::vector<std::vector<int>> matrix);
+	void branchAndBound(Matrix* matrix);
 	void dynamicProgramming(Matrix* matrix);
 
 	void displayResults();

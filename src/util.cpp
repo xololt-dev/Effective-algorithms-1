@@ -146,6 +146,7 @@ void Matrix::display() {
 		}
 		std::cout << "\n";
 	}	
+	std::cout << "\n";
 }
 
 void clear() {

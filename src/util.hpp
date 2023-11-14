@@ -27,9 +27,10 @@ public:
 	int reduceRows();
 	int reduceColumns();
 	int reduceMatrix();
-	std::vector<int> getPath();
+	std::vector<short> getPath();
 	int cost;
 	Node(int vertex, Node* parentNode, Matrix* matrix, int parentCost);
+	~Node();
 };
 
 struct Cache {

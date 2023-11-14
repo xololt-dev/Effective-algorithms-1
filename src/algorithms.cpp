@@ -337,6 +337,14 @@ Node::Node(int vertex, Node* parentNode, Matrix* matrix, int parentCost) {
 	cost = parentCost;
 }
 
+Node::~Node() {
+	for (auto& a : childrenNodes) {
+		a->~Node();
+		delete a;
+	}
+	childrenNodes.clear();
+}
+
 void Node::getChildrenNodes() {
 	int verNumber = vertexNumber;
 	for (int k = 0; k < childMatrix.size; ++k) {
@@ -366,8 +374,7 @@ int Node::reduceColumns() {
 			}
 		}
 	}
-	//childMatrix.display();
-	//std::cout << "Redukcja kolumn: " << columnsReductionCost << "\n";
+
 	return columnsReductionCost;
 }
 
@@ -388,8 +395,7 @@ int Node::reduceRows() {
 			}
 		}
 	}
-	//childMatrix.display();
-	//std::cout << "Redukcja rzedow: " << rowsReductionCost << "\n";
+
 	return rowsReductionCost;
 }
 
@@ -416,10 +422,10 @@ int Node::reduceMatrix() {
 	return reductionCost;
 }
 
-std::vector<int> Node::getPath()
+std::vector<short> Node::getPath()
 {
 	Node* pointer = this;
-	std::vector<int> returnVector;
+	std::vector<short> returnVector;
 	while (pointer->parent != nullptr)
 	{
 		returnVector.push_back(pointer->vertexNumber);
@@ -434,26 +440,18 @@ void Algorithms::branchAndBound(Matrix* matrix) {
 
 	auto compare = [](Node* x, Node* y) {return x->cost > y->cost; };
 	int finalcost = INT_MAX;
-	std::vector<int> finalPath;
+	std::vector<short> finalPath;
 	std::priority_queue<Node*, std::vector<Node*>, decltype(compare)>queue(compare);
 	Node* root = new Node(0, nullptr, matrix, 0);
 	root->reduceMatrix();
 	queue.push(root);
 	while (!queue.empty()) {
-		
-		//std::cout << "==============\n";
 		if (queue.top()->cost > finalcost) {
 			break;
 		}
 
 		auto node = queue.top();
-		/*
-		std::cout << "Node cost: " << node->cost << "\n";
-		std::cout << "Node matrix: \n";
-		node->childMatrix.display();
 
-		std::cout << "===========\n";
-		*/
 		queue.pop();
 		node->getChildrenNodes();
 		if (node->childrenNodes.size() != 0)
@@ -470,12 +468,12 @@ void Algorithms::branchAndBound(Matrix* matrix) {
 		}
 	}
 	this->executionTime = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - now);
-	
-	std::move(finalPath.begin(), finalPath.end(), this->vertexOrder);
+
+	finalPath.pop_back();
+	std::reverse(finalPath.begin(), finalPath.end());
+	this->vertexOrder = finalPath;
+
 	this->pathLength = finalcost;
-	std::cout << "FINAL PATH:" << std::endl;
-	for (int i = finalPath.size() - 1; i > -1; --i) {
-		std::cout << " " << finalPath[i] << " " << std::endl;
-	}
-	std::cout << "FINAL PATH COST: " << finalcost << std::endl;
+
+	root->~Node();
 }

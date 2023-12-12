@@ -10,3 +10,6 @@ Algorithms:
 
 Limitations:
 - dynamic programming will work only for sub 32 matrices of data (int data type)
+
+ATSP test files from:
+http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/atsp/

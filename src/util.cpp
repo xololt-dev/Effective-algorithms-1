@@ -12,6 +12,51 @@ void Matrix::loadFromFile(std::string fileName) {
 
 		int dimension = 0, cross = 0, valueInMatrix = 0;
 		std::string stringTemp;
+		
+		file >> dimension;
+
+		this->size = dimension;
+		this->mat.reserve(dimension);
+		std::vector<std::vector<int>>::iterator matIter = mat.begin();
+
+		for (int i = 0; i < dimension; i++) {
+			for (int j = 0; j < dimension; j++) {
+				file >> valueInMatrix;
+
+				// pierwszy wiersz wymaga specjalnego traktowania - musimy zrobiæ push_back vectorów
+				if (mat.size() < size) {
+					std::vector<int> tempVec;
+					tempVec.push_back(!mat.size() ? 0 : valueInMatrix);
+					mat.push_back(tempVec);
+
+					matIter = mat.begin();
+				}
+				// reszta normalny pushback
+				else {
+					if (i == j) (*matIter).push_back(0);
+					else (*matIter).push_back(valueInMatrix);
+
+					matIter++;
+					if (matIter == mat.end()) matIter = mat.begin();
+				}
+			}
+		}
+
+		file.close();
+	}
+	else std::cout << "Plik nie zostal otworzony!\n";
+}
+
+void Matrix::oldLoadFromFile(std::string fileName) {
+	std::fstream file;
+	file.open(fileName, std::ios::in);
+
+	if (file.good()) {
+		// jeœli istnieje poprzednia matryca, czyœcimy
+		if (mat.size()) mat.clear();
+
+		int dimension = 0, cross = 0, valueInMatrix = 0;
+		std::string stringTemp;
 
 		do {
 			file >> stringTemp;
@@ -101,6 +146,7 @@ void Matrix::display() {
 		}
 		std::cout << "\n";
 	}	
+	std::cout << "\n";
 }
 
 void clear() {

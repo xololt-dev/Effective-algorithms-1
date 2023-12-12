@@ -1,5 +1,4 @@
 #include "util.hpp"
-// #include "algorithms.hpp"
 
 #include <iostream>
 #include <conio.h>
@@ -12,9 +11,11 @@ void algorithmMenu() {
 	char option;
 	do {
 		std::cout << "\n==== URUCHOM ALGORYTM ===\n";
-		std::cout << "1.Brute force\n";
-		std::cout << "2.Podzial i ograniczenia\n";
-		std::cout << "3.Programowanie dynamiczne\n";
+		std::cout << "1.Brute force (ST)\n";
+		std::cout << "2.Brute force (MT)\n";
+		std::cout << "3.Podzial i ograniczenia\n";
+		std::cout << "4.Programowanie dynamiczne\n";
+		std::cout << "5.Benchmark\n";
 		std::cout << "0.Powrot\n";
 		std::cout << "Podaj opcje:";
 		option = _getche();
@@ -22,16 +23,27 @@ void algorithmMenu() {
 
 		switch (option) {
 		case '1':
-			algo.bruteForce((Matrix*) &matrix);
-			// menu_table();
+			algo.bruteForce((Matrix*) &matrix, 0);
+			algo.displayResults();
 			break;
 
 		case '2':
-			// menu_list();
+			algo.bruteForce((Matrix*) &matrix);
+			algo.displayResults();
 			break;
 
 		case '3':
-			// menu_heap();
+			algo.branchAndBound((Matrix*)&matrix);
+			algo.displayResults();
+			break;
+
+		case '4':
+			algo.dynamicProgramming((Matrix*) &matrix);
+			algo.displayResults();
+			break;
+
+		case '5':
+			algo.benchmark((Matrix*)&matrix);
 			break;
 		}
 	} while (option != '0');

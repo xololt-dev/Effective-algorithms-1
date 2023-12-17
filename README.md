@@ -6,7 +6,7 @@ Asymmetric traveling salesman problem (ATSP)
 Algorithms:
 - brute force
 - dynamic programming
-- branch and bound
+- branch and bound by [Kyubiso](https://github.com/Kyubiso)
 
 Limitations:
 - dynamic programming will work only for sub 32 matrices of data (int data type)
